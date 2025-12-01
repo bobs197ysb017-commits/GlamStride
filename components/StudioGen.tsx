@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Download, Loader2, Image as ImageIcon } from 'lucide-react';
 import { generateStandardImage } from '../services/geminiService';
 import { AspectRatio } from '../types';
+import { addToHistory } from '../utils/history';
 
 // Gemini 2.5 Flash Image only supports these ratios
 const RATIOS: AspectRatio[] = ['1:1', '3:4', '4:3', '9:16', '16:9'];
@@ -21,6 +22,14 @@ const StudioGen: React.FC = () => {
     try {
       const img = await generateStandardImage(prompt, aspectRatio);
       setGeneratedImage(img);
+      
+      // Save to History
+      addToHistory({
+        type: 'IMAGE_GEN',
+        title: 'إنشاء صورة',
+        details: prompt,
+        result: img
+      });
     } catch (err: any) {
       console.error(err);
       setError(err.message || "فشل في إنشاء الصورة.");

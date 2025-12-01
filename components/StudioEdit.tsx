@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Loader2, Wand2, Download } from 'lucide-react';
+import { Upload, Loader2, Wand2, Download, Stamp } from 'lucide-react';
 import { editImage } from '../services/geminiService';
+import { addToHistory } from '../utils/history';
 
 const StudioEdit: React.FC = () => {
   const [prompt, setPrompt] = useState('');
@@ -26,12 +27,67 @@ const StudioEdit: React.FC = () => {
     try {
       const result = await editImage(image, prompt);
       setEditedImage(result);
+
+      // Save to History
+      addToHistory({
+        type: 'IMAGE_EDIT',
+        title: 'تعديل صورة',
+        details: prompt,
+        result: result
+      });
     } catch (err: any) {
       console.error(err);
       alert(err.message || "فشل في تعديل الصورة.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleWatermark = () => {
+    if (!image) return;
+
+    const img = new Image();
+    img.src = image;
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Draw original image
+      ctx.drawImage(img, 0, 0);
+
+      // Configure Watermark
+      const text = "GlamStride";
+      // Dynamic font size relative to image width (e.g., 5% of width)
+      const fontSize = Math.max(24, Math.floor(img.width * 0.05)); 
+      
+      ctx.font = `800 ${fontSize}px 'Tajawal', sans-serif`;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+
+      // Add Shadow for visibility on light backgrounds
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+
+      // Text Color (Semi-transparent white)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      
+      // Position: Bottom Right with padding
+      const padding = fontSize * 0.5;
+      ctx.fillText(text, canvas.width - padding, canvas.height - padding);
+
+      // Update state
+      const watermarked = canvas.toDataURL('image/png');
+      setImage(watermarked);
+
+      // Optionally log watermark action?
+      // For now, only logging AI edits
+    };
   };
 
   return (
@@ -44,7 +100,20 @@ const StudioEdit: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Source */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">الأصل</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">الأصل</h3>
+            {image && (
+              <button 
+                onClick={handleWatermark}
+                className="text-xs flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-violet-300 px-2 py-1 rounded transition-colors"
+                title="إضافة شعار GlamStride"
+              >
+                <Stamp size={12} />
+                <span>إضافة شعار</span>
+              </button>
+            )}
+          </div>
+          
           <div 
             className={`border-2 border-dashed border-slate-700 rounded-xl min-h-[300px] flex items-center justify-center relative overflow-hidden transition-colors ${!image ? 'hover:bg-slate-800/50 cursor-pointer' : ''}`}
             onClick={() => !image && fileInputRef.current?.click()}

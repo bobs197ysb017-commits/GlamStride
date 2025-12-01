@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Search, Loader2, Globe, ArrowLeft, TrendingUp, ShoppingBag } from 'lucide-react';
 import { searchMarketTrends } from '../services/geminiService';
 import { GroundingMetadata } from '../types';
+import { addToHistory } from '../utils/history';
+import MarkdownRenderer from './MarkdownRenderer';
 
 const MarketResearch: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -17,6 +19,14 @@ const MarketResearch: React.FC = () => {
     try {
       const data = await searchMarketTrends(query, searchType);
       setResults({ text: data.text, grounding: data.groundingMetadata });
+
+      // Save to History
+      addToHistory({
+        type: 'MARKET_RESEARCH',
+        title: searchType === 'trend' ? 'بحث عن صيحات' : 'بحث عن منتج',
+        details: query,
+        result: data.text.substring(0, 300) + (data.text.length > 300 ? '...' : '')
+      });
     } catch (err) {
       console.error(err);
       setResults({ text: "خطأ في جلب بيانات السوق.", grounding: undefined });
@@ -26,15 +36,15 @@ const MarketResearch: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8 pb-10">
       <div className="text-center space-y-2">
         <h2 className="text-3xl font-bold text-white transition-all duration-300">
           {searchType === 'trend' ? 'كاشف الصيحات' : 'مكتشف المنتجات'}
         </h2>
         <p className="text-slate-400 transition-all duration-300">
           {searchType === 'trend' 
-            ? 'معلومات سوقية فورية مدعومة ببحث جوجل.' 
-            : 'رؤى عميقة حول المنتجات والأسعار والمنافسين.'}
+            ? 'تقارير سوقية احترافية مدعومة ببيانات جوجل المحدثة.' 
+            : 'تحليل شامل للمنتجات والمنافسين والأسعار.'}
         </p>
       </div>
 
@@ -48,7 +58,7 @@ const MarketResearch: React.FC = () => {
           }`}
         >
           <TrendingUp size={16} />
-          <span>صيحات</span>
+          <span>صيحات السوق</span>
         </button>
         <button 
           onClick={() => { setSearchType('product'); setResults(null); setQuery(''); }}
@@ -59,11 +69,11 @@ const MarketResearch: React.FC = () => {
           }`}
         >
           <ShoppingBag size={16} />
-          <span>منتجات</span>
+          <span>تحليل منتج</span>
         </button>
       </div>
 
-      <form onSubmit={handleSearch} className="relative group">
+      <form onSubmit={handleSearch} className="relative group max-w-2xl mx-auto">
         <div className={`absolute -inset-0.5 rounded-xl blur opacity-30 transition duration-500 group-hover:opacity-75 ${
           searchType === 'trend' ? 'bg-gradient-to-l from-violet-600 to-indigo-600' : 'bg-gradient-to-l from-pink-600 to-rose-600'
         }`}></div>
@@ -72,10 +82,10 @@ const MarketResearch: React.FC = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={searchType === 'trend' 
-            ? "مثلاً: 'موضة ملابس الصيف 2025'" 
-            : "مثلاً: 'أديداس سامبا' أو 'دايسون'"
+            ? "مثلاً: 'اتجاهات ملابس المحجبات لصيف 2025'..." 
+            : "مثلاً: 'نايكي إير جوردن 4' أو 'ساعة آبل الترا 2'..."
           }
-          className="relative w-full bg-slate-900 border border-slate-700 text-white ps-12 pe-20 py-4 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all shadow-xl"
+          className="relative w-full bg-slate-900 border border-slate-700 text-white ps-12 pe-20 py-4 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all shadow-xl placeholder-slate-500"
           style={{
             borderColor: loading ? 'transparent' : '',
             boxShadow: loading ? 'none' : ''
@@ -85,36 +95,34 @@ const MarketResearch: React.FC = () => {
         <button
           type="submit"
           disabled={loading || !query}
-          className={`absolute end-2 top-2 bottom-2 px-6 rounded-lg font-medium transition-colors disabled:opacity-0 z-10 text-white ${
+          className={`absolute end-2 top-2 bottom-2 px-6 rounded-lg font-medium transition-colors disabled:opacity-0 z-10 text-white flex items-center justify-center ${
             searchType === 'trend' ? 'bg-violet-600 hover:bg-violet-500' : 'bg-pink-600 hover:bg-pink-500'
           }`}
         >
-          {loading ? <Loader2 className="animate-spin" /> : <ArrowLeft />}
+          {loading ? <Loader2 className="animate-spin" size={20} /> : <ArrowLeft className="rtl:rotate-180" size={20} />}
         </button>
       </form>
 
       {loading && (
-        <div className="space-y-4 animate-pulse">
+        <div className="space-y-4 animate-pulse max-w-2xl mx-auto">
            <div className="h-4 bg-slate-800 rounded w-3/4"></div>
            <div className="h-4 bg-slate-800 rounded w-full"></div>
            <div className="h-4 bg-slate-800 rounded w-5/6"></div>
+           <div className="h-32 bg-slate-800/50 rounded-xl mt-4"></div>
         </div>
       )}
 
       {results && (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-6 animate-fade-in">
-          <div className="prose prose-invert max-w-none">
-            <p className="whitespace-pre-wrap text-slate-200 leading-relaxed">
-              {results.text}
-            </p>
-          </div>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 space-y-6 animate-fade-in shadow-xl">
+          {/* Render Markdown Content */}
+          <MarkdownRenderer content={results.text} />
 
           {results.grounding?.groundingChunks && results.grounding.groundingChunks.length > 0 && (
-            <div className="border-t border-slate-700 pt-4">
+            <div className="border-t border-slate-700 pt-6 mt-6">
               <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Globe size={12} /> المصادر
+                <Globe size={12} /> المصادر الموثقة
               </h4>
-              <div className="grid gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {results.grounding.groundingChunks.map((chunk, idx) => {
                    if (!chunk.web?.uri) return null;
                    return (
@@ -123,17 +131,17 @@ const MarketResearch: React.FC = () => {
                       href={chunk.web.uri}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between bg-slate-900 hover:bg-slate-800 p-3 rounded-lg border border-slate-700 transition-colors group"
+                      className="flex items-center justify-between bg-slate-900 hover:bg-slate-950 p-3 rounded-lg border border-slate-700 hover:border-violet-500/30 transition-all group"
                      >
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-violet-300 group-hover:text-violet-200 truncate max-w-[400px]">
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-medium text-violet-300 group-hover:text-violet-200 truncate">
                             {chunk.web.title || "نتيجة ويب"}
                           </span>
-                          <span className="text-xs text-slate-500 truncate max-w-[400px]">
+                          <span className="text-xs text-slate-500 truncate">
                             {chunk.web.uri}
                           </span>
                         </div>
-                        <ArrowLeft size={14} className="text-slate-600 group-hover:text-white" />
+                        <ArrowLeft size={14} className="text-slate-600 group-hover:text-white rtl:rotate-180 flex-shrink-0" />
                      </a>
                    );
                 })}

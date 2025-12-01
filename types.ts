@@ -5,7 +5,8 @@ export enum AppTab {
   MARKET_RESEARCH = 'MARKET_RESEARCH',
   STRATEGY = 'STRATEGY',
   QUICK_COPY = 'QUICK_COPY',
-  ASSISTANT = 'ASSISTANT'
+  ASSISTANT = 'ASSISTANT',
+  HISTORY = 'HISTORY'
 }
 
 export interface ChatMessage {
@@ -32,3 +33,14 @@ export interface GeneratedImage {
 }
 
 export type AspectRatio = '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '9:16' | '16:9' | '21:9';
+
+export type HistoryType = 'IMAGE_GEN' | 'IMAGE_EDIT' | 'MARKET_RESEARCH' | 'STRATEGY' | 'QUICK_COPY';
+
+export interface HistoryItem {
+  id: string;
+  type: HistoryType;
+  timestamp: number;
+  title: string;
+  details: string; // The prompt or query
+  result?: string; // The text result or image URL
+}

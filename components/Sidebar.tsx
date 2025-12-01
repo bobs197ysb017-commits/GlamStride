@@ -6,7 +6,8 @@ import {
   TrendingUp, 
   BrainCircuit, 
   Zap, 
-  MessageSquare 
+  MessageSquare,
+  History
 } from 'lucide-react';
 import { AppTab } from '../types';
 
@@ -35,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
         <p className="text-xs text-slate-500 mt-1">منشئ المتاجر بالذكاء الاصطناعي</p>
       </div>
       
-      <nav className="flex-1 px-4 space-y-2">
+      <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -54,6 +55,20 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
             </button>
           );
         })}
+
+        <div className="pt-4 mt-2 border-t border-slate-800">
+           <button
+              onClick={() => setActiveTab(AppTab.HISTORY)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                activeTab === AppTab.HISTORY
+                  ? 'bg-slate-700 text-white' 
+                  : 'text-slate-500 hover:bg-slate-800 hover:text-slate-300'
+              }`}
+            >
+              <History size={18} />
+              <span className="font-medium text-sm">سجل النشاطات</span>
+            </button>
+        </div>
       </nav>
 
       <div className="p-4 border-t border-slate-800">

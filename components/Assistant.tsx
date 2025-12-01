@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Loader2, Copy, Check } from 'lucide-react';
+import { Send, User, Bot, Loader2 } from 'lucide-react';
 import { chatWithAssistant } from '../services/geminiService';
+import MarkdownRenderer from './MarkdownRenderer';
 
 interface Message {
   role: 'user' | 'model';
@@ -40,83 +41,6 @@ const Assistant: React.FC = () => {
     }
   };
 
-  // --- Helper: Simple Markdown Formatter ---
-  const formatInline = (text: string) => {
-    // Split by bold (**text**)
-    const parts = text.split(/(\*\*.*?\*\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-bold text-violet-100 bg-violet-500/20 px-1 rounded">{part.slice(2, -2)}</strong>;
-      }
-      return part;
-    });
-  };
-
-  const renderMessageText = (text: string) => {
-    // 1. Split by Code Blocks
-    const segments = text.split(/(```[\s\S]*?```)/g);
-    
-    return segments.map((segment, i) => {
-      // Is Code Block?
-      if (segment.startsWith('```') && segment.endsWith('```')) {
-        const content = segment.slice(3, -3).replace(/^[a-z]+\n/, ''); 
-        return (
-          <div key={i} className="my-3 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 shadow-inner" dir="ltr">
-            <div className="bg-slate-900 px-3 py-1.5 text-[10px] text-slate-500 border-b border-slate-700 flex justify-between items-center uppercase tracking-wider font-mono">
-              <span>Code Snippet</span>
-            </div>
-            <pre className="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed">
-              {content.trim()}
-            </pre>
-          </div>
-        );
-      }
-
-      // 2. Process Standard Text Lines
-      const lines = segment.split('\n');
-      return (
-        <div key={i} className="space-y-1">
-          {lines.map((line, j) => {
-            const trimmed = line.trim();
-            if (!trimmed) return <div key={j} className="h-2"></div>;
-
-            // Headings
-            if (trimmed.startsWith('### ')) {
-              return <h3 key={j} className="text-base font-bold text-violet-300 mt-3 mb-1">{formatInline(trimmed.slice(4))}</h3>;
-            }
-            if (trimmed.startsWith('## ')) {
-               return <h2 key={j} className="text-lg font-bold text-violet-200 mt-4 mb-2 pb-1 border-b border-violet-500/30">{formatInline(trimmed.slice(3))}</h2>;
-            }
-
-            // Lists
-            if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-              return (
-                <div key={j} className="flex gap-2 items-start ms-2 mb-1">
-                  <span className="text-violet-500 mt-1.5 text-[10px] flex-shrink-0">•</span>
-                  <span className="flex-1 text-slate-200">{formatInline(trimmed.slice(2))}</span>
-                </div>
-              );
-            }
-            
-            // Numbered Lists
-            const numMatch = trimmed.match(/^(\d+)\.\s/);
-            if (numMatch) {
-               return (
-                 <div key={j} className="flex gap-2 items-start ms-2 mb-1">
-                   <span className="text-violet-500 font-mono text-xs mt-0.5 font-bold flex-shrink-0">{numMatch[1]}.</span>
-                   <span className="flex-1 text-slate-200">{formatInline(trimmed.slice(numMatch[0].length))}</span>
-                 </div>
-               );
-            }
-
-            // Standard Paragraph
-            return <p key={j} className="leading-7 text-slate-200">{formatInline(line)}</p>;
-          })}
-        </div>
-      );
-    });
-  };
-
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] bg-slate-900 w-full mx-auto rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
       {/* Header */}
@@ -152,9 +76,7 @@ const Assistant: React.FC = () => {
               {m.role === 'user' ? (
                   <p className="leading-relaxed whitespace-pre-wrap">{m.text}</p>
               ) : (
-                  <div className="prose-like">
-                    {renderMessageText(m.text)}
-                  </div>
+                  <MarkdownRenderer content={m.text} />
               )}
             </div>
           </div>

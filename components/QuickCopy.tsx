@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Zap, Copy, Check } from 'lucide-react';
 import { generateQuickCopy } from '../services/geminiService';
+import { addToHistory } from '../utils/history';
 
 const QuickCopy: React.FC = () => {
   const [input, setInput] = useState('');
@@ -15,6 +16,14 @@ const QuickCopy: React.FC = () => {
     try {
       const res = await generateQuickCopy(input);
       setOutput(res);
+      
+      // Save to History
+      addToHistory({
+        type: 'QUICK_COPY',
+        title: 'نسخ إعلاني',
+        details: input,
+        result: res
+      });
     } catch (e) {
       console.error(e);
       setOutput("خطأ في إنشاء النص.");
